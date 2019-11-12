@@ -47,6 +47,7 @@ namespace WeixinMPToPDF.ViewModel
             Status = "准备就绪";
             WebClient = new WebClient();
             WebClient.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.87 Safari/537.36");
+            
         }
 
         public RelayCommand DownloadImageCommand { get; set; }
@@ -188,6 +189,7 @@ namespace WeixinMPToPDF.ViewModel
                 }
             }
             pdf.Save($"out-{DateTime.Now:yyyyMMddHHmmss}.pdf");
+            MessageBox.Show("生成成功");
         }
 
     }

@@ -23,6 +23,7 @@ namespace WeixinMPToPDF
         public MainWindow()
         {
             InitializeComponent();
+            MessageBox.Show("打开程序之后输入公众号链接，点下载图片，等图片处理完之后再点生成PDF.\n生成成功的PDF会在当前程序目录下。");
         }
     }
 }
