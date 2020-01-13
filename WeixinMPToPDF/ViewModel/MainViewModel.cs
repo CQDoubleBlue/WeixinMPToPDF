@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using CsQuery;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.CommandWpf;
 using PdfSharp.Drawing;
@@ -71,6 +72,23 @@ namespace WeixinMPToPDF.ViewModel
             set { status = value; RaisePropertyChanged(); }
         }
 
+        private string cssPath = "img[data-src]";
+
+        public string CssPath
+        {
+            get { return cssPath; }
+            set { cssPath = value; RaisePropertyChanged();}
+        }
+
+        private string valuePath = "data-src";
+
+        public string ValuePath
+        {
+            get { return valuePath; }
+            set { valuePath = value; RaisePropertyChanged(); }
+        }
+
+
 
         public void DownloadImage()
         {
@@ -82,26 +100,38 @@ namespace WeixinMPToPDF.ViewModel
 
             new Thread(() =>
             {
-                var html = WebClient.DownloadString(new Uri(Url));
-                var regex = new Regex("data-src=\"(.*?)\"");
-                var matches = regex.Matches(html);
-                if (matches.Count == 0)
+                var uri = new Uri(Url);
+                var html = WebClient.DownloadString(uri);
+                var dom = CQ.Create(html);
+                var images = dom[CssPath];
+
+                if (images.Length == 0)
                 {
                     MessageBox.Show("此url没有图片");
                 }
 
-                Status = $"检测到{matches.Count}张图片";
+                Status = $"检测到{images.Length}张图片";
                 if(Directory.Exists("temp"))
                     Directory.Delete("temp", true);
                 Thread.Sleep(10);
                 Directory.CreateDirectory("temp");
                 var index = 1;
-                foreach (Match match in matches)
+                foreach (var image in images)
                 {
-                    Status = $"图片下载{index}/{matches.Count}";
-                    var imageUrl = match.Groups[1].Value;
-                    var ext = imageUrl.Substring(imageUrl.Length - 3);
-                    WebClient.DownloadFile(match.Groups[1].Value, $"temp/{(index++):D3}.{ext}");
+                    Status = $"图片下载{index}/{images.Length}";
+                    var imageUrl = image.Attributes.GetAttribute(ValuePath);
+                    var imageName = $"temp/{(index++):D3}.jpg";
+                    WebClient.DownloadFile(imageUrl, imageName);
+                    var contentType = WebClient.ResponseHeaders["Content-Type"];
+                    switch (contentType)
+                    {
+                        case "image/png":
+                            File.Move(imageName, imageName.Replace(".jpg", ".png"));
+                            break;
+                        case "image/gif":
+                            File.Move(imageName, imageName.Replace(".jpg", ".gif"));
+                            break;
+                    }
                 }
 
                 Status = "图片下载完成";
